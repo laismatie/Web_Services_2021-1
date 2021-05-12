@@ -1,3 +1,4 @@
+import { dowloadRouter } from './routes/download';
 import * as express from  'express'
 import * as fileUpload from 'express-fileupload'
 import * as cors from 'cors'
@@ -12,3 +13,4 @@ app.use(logger('dev'))
 app.use(fileUpload())
 
 app.use('/upload', uploadRouter)
+app.use('/download', dowloadRouter)
