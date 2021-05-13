@@ -1,41 +1,42 @@
-import { ArquivoController, ErroUpload } from './../controllers/ArquivoController';
 import {Router} from 'express'
 import * as path from 'path'
 import * as fs from 'fs'
 
+import { ImageController, ErroUpload} from './../controllers/ImageController';
 export const uploadRouter = Router()
+
 
 uploadRouter.post('/', async (req, res) =>{
     if(!req.files || Object.keys(req.files).length == 0){
-        return res.status(400).send('Nenhum arquivo recebido')
+        return res.status(400).send('Nenhum image recebido')
     }
 
-    const nomesArquivos = Object.keys(req.files)
-    const diretorio = path.join(__dirname, '..','..','arquivos_temporarios')
+    const nomesimages = Object.keys(req.files)
+    const diretorio = path.join(__dirname, '..','..','pasta_temporarias')
 
     if(!fs.existsSync(diretorio)){
         fs.mkdirSync(diretorio)
     }
 
     const bd = req.app.locals.bd
-    const arquivoCtrl = new ArquivoController(bd)
-    const idsArquivosSalvos = []
+    const imageCtrl = new ImageController(bd)
+    const idsImagesSalvos = []
     let quantidadeErrosGravacao = 0
-    let quantidadeErrosObjArquivoInvalido = 0
+    let quantidadeErrosObjImageInvalido = 0
     let quantidadeErroInesperado = 0
 
-    const promises = nomesArquivos.map( async (arquivo) => {
-        const objArquivo = req.files[arquivo]
+    const promises = nomesimages.map( async (image) => {
+        const objImage = req.files[image]
         try {
-            const idArquivo = await arquivoCtrl.realizarUpload(objArquivo)
-            idsArquivosSalvos.push(idArquivo)
+            const idImage = await imageCtrl.realizarUpload(objImage)
+            idsImagesSalvos.push(idImage)
         } catch (erro) {
             switch(erro){
                 case ErroUpload.NAO_FOI_POSSIVEL_GRAVAR:
                     quantidadeErrosGravacao++
                     break
-                case ErroUpload.OBJETO_ARQUIVO_INVALIDO:
-                    quantidadeErrosObjArquivoInvalido++
+                case ErroUpload.IMAGEM_INVALIDO:
+                    quantidadeErrosObjImageInvalido++
                     break
                 default:
                     quantidadeErroInesperado++
@@ -44,9 +45,9 @@ uploadRouter.post('/', async (req, res) =>{
     })
     await Promise.all(promises)
     res.json({
-        idsArquivosSalvos,
+        idsImagesSalvos,
         quantidadeErrosGravacao,
         quantidadeErroInesperado,
-        quantidadeErrosObjArquivoInvalido
+        quantidadeErrosObjImageInvalido
     })
 })
