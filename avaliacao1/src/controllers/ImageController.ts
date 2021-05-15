@@ -2,8 +2,10 @@ import { Db, GridFSBucket, ObjectId } from "mongodb"
 import { join } from "path"
 import {existsSync, mkdirSync, writeFileSync, createReadStream, unlinkSync, createWriteStream} from "fs"
 
+import * as sharp from 'sharp'
+
 export enum ErroUpload{
-    IMAGEM_INVALIDO = 'Imagem inválido',
+    IMAGEM_INVALIDA = 'Imagem inválida',
     NAO_FOI_POSSIVEL_GRAVAR = 'Não foi possível gravar o arquivo no banco de dados'
 }
 
@@ -19,7 +21,7 @@ export class ImageController{
 
     constructor(bd: Db){
         this._bd = bd
-        this._caminhoDiretorioArquivos = join(__dirname, '..','..','arquivos_temporarios')
+        this._caminhoDiretorioArquivos = join(__dirname, '..','..','pasta_temporaria')
 
         if(!existsSync( this._caminhoDiretorioArquivos)){
             mkdirSync( this._caminhoDiretorioArquivos)
@@ -32,11 +34,14 @@ export class ImageController{
             && 'data' in objArquivo
             && objArquivo['name']
             && objArquivo['data']
+            && objArquivo['mimetype'] === 'image/jpeg'
+            || objArquivo['mimetype'] === 'image/png'
+            || objArquivo['mimetype'] === 'image/jpg'
     }
 
     private _inicializarBucket(): GridFSBucket{
         return new GridFSBucket(this._bd, {
-            bucketName: 'arquivos'
+            bucketName: 'images'
         })
     }
 
@@ -54,7 +59,7 @@ export class ImageController{
 
                 const streamGridFS = bucket.openUploadStream(nomeArquivo,{
                     metadata: {
-                        mimetype: objArquivo['mimetype']
+                        mimetype: objArquivo['mimetype'],
                     }
                 })
 
@@ -70,7 +75,7 @@ export class ImageController{
                         reject(ErroUpload.NAO_FOI_POSSIVEL_GRAVAR)
                     })
             }else{
-                reject(ErroUpload.IMAGEM_INVALIDO)
+                reject(ErroUpload.IMAGEM_INVALIDA)
             }
         })
     }
@@ -86,6 +91,50 @@ export class ImageController{
                     const streamGridFS = bucket.openDownloadStream(_id)
                     const caminhoArquivo = join(this._caminhoDiretorioArquivos, metadados['filename'])
                     const streamGravacao = createWriteStream(caminhoArquivo)
+                    streamGridFS
+                        .pipe(streamGravacao)
+                        .on('finish', ()=>{
+                            resolve(caminhoArquivo)
+                        })
+                        .on('erro', erro => {
+                            console.log(erro)
+                            reject(ErroDownload.NAO_FOI_POSSIVEL_GRAVAR)
+                        })
+
+                }else{
+                    reject(ErroDownload.NENHUMA_IMAGEM_ENCONTRADA)
+                }
+
+            }else{
+                reject(ErroDownload.ID_INVALIDO)
+            }
+        })
+    }
+
+
+    realizarDownloadPixel(id: string): Promise<string>{
+        return new Promise( async (resolve, reject) =>{
+            if(id && id.length == 24){
+                const _id = new ObjectId(id) 
+                const bucket = this._inicializarBucket()
+                const resultados = await bucket.find({'_id' : _id}).toArray()
+                if(resultados.length > 0){
+                    const metadados = resultados[0]
+                    const streamGridFS = bucket.openDownloadStream(_id)
+                    const caminhoArquivo = join(this._caminhoDiretorioArquivos, metadados['filename'])
+                    const streamGravacao = createWriteStream(caminhoArquivo)
+
+                      /*
+                    sharp(streamGravacao)
+                        .resize(100)
+                        .toBuffer()
+                        .then( data => {
+                            writeFileSync(streamGravacao, data);
+                        })
+                        .catch( err => {
+                            console.log(err);
+                    });	*/
+
                     streamGridFS
                         .pipe(streamGravacao)
                         .on('finish', ()=>{

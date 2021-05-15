@@ -13,4 +13,4 @@ app.use(logger('dev'))
 app.use(fileUpload())
 
 app.use('/upload', uploadRouter)
-app.use('/download', dowloadRouter)
+app.use('/imagem', dowloadRouter)
