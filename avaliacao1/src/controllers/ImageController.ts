@@ -117,25 +117,19 @@ export class ImageController{
             if(id && id.length == 24){
                 const _id = new ObjectId(id) 
                 const bucket = this._inicializarBucket()
+
+                const resizeImg = sharp()
+                    .resize(100)
+                    
                 const resultados = await bucket.find({'_id' : _id}).toArray()
                 if(resultados.length > 0){
                     const metadados = resultados[0]
                     const streamGridFS = bucket.openDownloadStream(_id)
                     const caminhoArquivo = join(this._caminhoDiretorioArquivos, metadados['filename'])
                     const streamGravacao = createWriteStream(caminhoArquivo)
-
-                      /*
-                    sharp(streamGravacao)
-                        .resize(100)
-                        .toBuffer()
-                        .then( data => {
-                            writeFileSync(streamGravacao, data);
-                        })
-                        .catch( err => {
-                            console.log(err);
-                    });	*/
-
+                    
                     streamGridFS
+                        .pipe(resizeImg)
                         .pipe(streamGravacao)
                         .on('finish', ()=>{
                             resolve(caminhoArquivo)
