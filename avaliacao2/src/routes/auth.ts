@@ -47,8 +47,12 @@ authRouter.post('/app/register', async (req,res) => {
 })
 
 authRouter.post('/app/associate', async (req,res) => {
+    console.log('******** Associate ********')
     const { email, id_app} = req.body
-    console.log(email, id_app)
+    const authCtrl = new AuthController()
+    const user = await authCtrl.findUserByEmail(email)
+    console.log(`Usuário: ${user}`)
+    authCtrl.associateUserToApp(id_app, user.email)
 })
 
 authRouter.post('/user/login', async (req, res) => {

@@ -1,5 +1,5 @@
 import { User } from './User';
-import {Entity, ObjectIdColumn, ObjectID, Column, ManyToMany, JoinTable } from "typeorm";
+import {Entity, Column, ManyToMany, JoinTable, PrimaryGeneratedColumn } from "typeorm";
 
 export enum STATUSAPP {
     INVALID_SECRET = 'Invalid secret, this secret is already in use',
@@ -12,8 +12,8 @@ export enum STATUSAPP {
 @Entity()
 export class App {
 
-    @ObjectIdColumn()
-    id: ObjectID;
+    @PrimaryGeneratedColumn()
+    id: number;
 
     @Column({ unique: true})
     id_app: string
@@ -26,7 +26,7 @@ export class App {
 
     @ManyToMany(() => User)
     @JoinTable()
-    users: User[];
+    users: User[]
 
    
     constructor(id_app: string, secret: string, expiresIn: string){
@@ -36,44 +36,7 @@ export class App {
     }
 
     isValid(): STATUSAPP {
-    //     if(this.secret === this.secret) {
-    //         return STATUSAPP.INVALID_SECRET
-    //     }  
-
-    //    if(this.id_app === this.id_app){
-    //        return STATUSAPP.INVALID_ID
-    //    }
-        // if(!this.name || this.name.length == 0){
-        //     return STATUS.INVALID_NAME
-        // }
-
-        // if(!this._isPasswordValid()){
-        //     return STATUS.INVALID_PASSWORD
-        // }
 
         return STATUSAPP.OK
     }
-
-    // isPasswordCorrect(password: string): boolean{
-    //     const hash = pbkdf2Sync(password, this.salt, 1000, 64, 'sha512').toString('hex')
-    //     return hash == this.hash
-    // }
-
-    // private _genaratePassword() {
-    //     if(this._isPasswordValid()) {
-    //         const salt = randomBytes(16).toString('hex')
-    //         const hash = pbkdf2Sync(this._password, salt, 1000, 64, 'sha512').toString('hex')
-    //         this.salt = salt
-    //         this.hash = hash
-            
-    //     }
-    // }
-
-    // private _isPasswordValid(): boolean {
-    //     return this._password
-    //         && this._password.length >= 8
-    //         && /[A-Z]/g.test(this._password)
-    //         && /[0-9]/g.test(this._password)
-    // }
-
 }

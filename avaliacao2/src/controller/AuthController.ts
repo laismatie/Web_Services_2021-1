@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express"
-import { getMongoManager, MongoEntityManager } from "typeorm"
+import { getManager} from "typeorm"
 import { verify } from 'jsonwebtoken'
 
 import { STATUS, User } from "../entity/User"
@@ -7,11 +7,10 @@ import { SECRET } from "../config/secret"
 import { App } from "../entity/App"
 
 export class AuthController {
-
-    entityManager: MongoEntityManager
+    entityManager: any
 
     constructor() {
-        this.entityManager = getMongoManager()
+        this.entityManager = getManager()
     }
 
     async registerUser(user: User): Promise<User> {
@@ -27,7 +26,18 @@ export class AuthController {
 
     async findUserByEmail(email: string): Promise<User> {
         const user = await this.entityManager.findOne(User, { email: email })
+        console.log(user, 'encontrei o usuário')
         return user
+    }
+    
+    async findAppById(id_app: string): Promise<App> {
+        const app = await this.entityManager.findOne(App, { id_app: id_app })
+        return app
+    }
+
+    async associateUserToApp(id_app: string, id:string) {
+        await this.entityManager.updateOne(User, {id: id}, {apps: [id_app]})
+        await this.entityManager.updateOne(App, {id_app: id_app}, {users:[id]})
     }
 
     static verifyToken(req: Request, res: Response, next: NextFunction) {

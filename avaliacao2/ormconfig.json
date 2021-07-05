@@ -1,6 +1,9 @@
 {
-   "type": "mongodb",
-   "host": "localhost",
+   "type": "postgres",
+   "host": "db",
+   "port": 5432,
+   "username": "postgres",
+   "password": "postgres",
    "database": "avaliacao2",
    "synchronize": true,
    "logging": false,
