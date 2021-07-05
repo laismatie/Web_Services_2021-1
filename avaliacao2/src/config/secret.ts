@@ -1,1 +1,0 @@
-export const SECRET = '01986e0ea25229cbe47ae2060c567a70'
